@@ -4,20 +4,16 @@ import dotenv from "dotenv";
 dotenv.config();
 
 async function databaseconaction() {
-  if (!process.env.database_url) {
-    throw new Error("database_url is not configured");
-  }
 
-  try {
-    await mongoose.connect(process.env.database_url, {
-      serverSelectionTimeoutMS: 10000
-    });
+    try {
+    await mongoose.connect("mongodb://localhost:27017/E-comrus")
+    console.log("The db is connected")
+        
+    } catch (error) {
+        console.log("error from database")
+    }
 
-    console.log("The db is connected successfully");
-  } catch (error) {
-    console.error("Database error:", error.message);
-    throw error;
-  }
+    
 }
 
 export default databaseconaction;
