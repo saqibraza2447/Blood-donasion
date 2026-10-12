@@ -1,41 +1,55 @@
+
 import express from "express";
 import cors from "cors";
-import router from "./modules/user/user.route.js";
-import databaseconaction from "./shared/config/batabaseconaction.js";
 import cookieParser from "cookie-parser";
-import login from './modules/user/user.route.js'
-import bloodrouter from './modules/BloodRequest/blood.route.js'
-import userRouter from './modules/user/user.route.js'
-import findrouter from './modules/Findblood/find.route.js'
 
+import userRouter from "./modules/user/user.route.js";
+import bloodrouter from "./modules/BloodRequest/blood.route.js";
+import findrouter from "./modules/Findblood/find.route.js";
+import databaseconaction from "./shared/config/batabaseconaction.js";
 
 const app = express();
+
 app.use(express.json());
 app.use(cookieParser());
 
-app.use(cors({
-  origin: "http://localhost:5173",
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      process.env.FRONTEND_URL,
+    ].filter(Boolean),
+    credentials: true,
+  })
+);
 
+// Connect to database before handling requests
+app.use(async (req, res, next) => {
+  try {
+    await databaseconaction();
+    next();
+  } catch (error) {
+    console.error("Database connection failed:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Database connection failed",
+    });
+  }
+});
 
-app.use("/users", router);
-app.use("/userlogin", login)
-app.use("/bloodrequest", bloodrouter);
+// API routes
 app.use("/users", userRouter);
-app.use("/findboner", findrouter)
+app.use("/userlogin", userRouter);
+app.use("/bloodrequest", bloodrouter);
+app.use("/findboner", findrouter);
 
-
-
-
-
-try {
-  await databaseconaction();
-
-  app.listen(4000, function () {
-    console.log("Server is running on port 4000");
+// Test route
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "LifeDrop API is running",
   });
-} catch (error) {
-  console.error("Server startup failed:", error.message);
-  process.exitCode = 1;
-}
+});
+
+// Vercel serverless export
+export default app;
